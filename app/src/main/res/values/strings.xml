@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">ATS_Control</string>
+    <string name="ats_control">ATS Control</string>
+    <string name="grid">GRID</string>
+    <string name="solar">SOLAR</string>
+    <string name="gen">GEN</string>
+    <string name="parameters">PARAMETERS</string>
+    <string name="load_current">Load current</string>
+    <string name="load_voltage">Load voltage</string>
+    <string name="water_level">Water level</string>
+    <string name="load_power">Load power</string>
+    <string name="oil_level">Oil level</string>
+    <string name="bluetooth">Bluetooth</string>
 </resources>
