@@ -1,14 +1,21 @@
 <resources>
-    <string name="app_name">ATS_Control</string>
+    <string name="app_name">ATS Control</string>
     <string name="ats_control">ATS Control</string>
     <string name="grid">GRID</string>
     <string name="solar">SOLAR</string>
     <string name="gen">GEN</string>
-    <string name="parameters">PARAMETERS</string>
+    <string name="status">STATUS</string>
     <string name="load_current">Load current</string>
     <string name="load_voltage">Load voltage</string>
     <string name="water_level">Water level</string>
     <string name="load_power">Load power</string>
     <string name="oil_level">Oil level</string>
     <string name="bluetooth">Bluetooth</string>
+    <string name="enter_admin_pin">Enter Admin PIN</string>
+    <string name="modal_instruction">Enter your admin pin to be able to control the ATS device.</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connected">Connected</string>
+    <string name="not_connected">Not connected</string>
+    <string name="turn_on_gen">Turn on Gen</string>
+    <string name="turn_off_gen">Turn of Gen</string>
 </resources>
