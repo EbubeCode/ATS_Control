@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private SwitchMaterial autoStartGen;
     private SwitchMaterial toggleGen;
     private boolean isAdmin;
+    private final boolean[] ignoreSwitch = {false, false};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +78,10 @@ public class MainActivity extends AppCompatActivity {
         lockAutoStart.setOnClickListener((e) -> getAdminCredentials());
 
         autoStartGen.setOnCheckedChangeListener((button, isChecked) -> {
+            if (ignoreSwitch[0]) {
+                ignoreSwitch[0] = false;
+                return;
+            }
             if (isAdmin && connectedThread != null) {
                 connectedThread.write(isChecked ? "1" : "0");
             }
@@ -84,6 +89,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         toggleGen.setOnCheckedChangeListener((button, isChecked) -> {
+            if (ignoreSwitch[1]) {
+                ignoreSwitch[1] = false;
+                return;
+            }
             if (isAdmin && connectedThread != null) {
                 connectedThread.write(isChecked ? "2" : "3");
                 genStatus.setText(isChecked ? R.string.turn_off_gen : R.string.turn_on_gen);
@@ -93,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         createConnectThread = new CreateConnectThread(this);
 
         connectionTimer = new Timer();
-        connectionTimer.schedule(createConnectThread, 5000L, 10000L);
+        connectionTimer.schedule(createConnectThread, 5000L, 30000L);
     }
 
 
@@ -246,15 +255,26 @@ public class MainActivity extends AppCompatActivity {
                     case "grid is on":
                         tripBulbs();
                         gridBulb.setImageResource(R.drawable.bulb_alive);
+                        if (toggleGen.isEnabled()) {
+                            ignoreSwitch[1] = true;
+                            toggleGen.setChecked(false);
+                        }
+                        genStatus.setText(R.string.turn_on_gen);
                         return;
                     case "pv is on":
                         tripBulbs();
                         solarBulb.setImageResource(R.drawable.bulb_alive);
+                        if (toggleGen.isEnabled()) {
+                            ignoreSwitch[1] = true;
+                            toggleGen.setChecked(false);
+                        }
+                        genStatus.setText(R.string.turn_on_gen);
                         return;
                     case "gen is on":
                         tripBulbs();
                         genBulb.setImageResource(R.drawable.bulb_alive);
                         if (toggleGen.isEnabled()) {
+                            ignoreSwitch[1] = true;
                             toggleGen.setChecked(true);
                         }
                         genStatus.setText(R.string.turn_off_gen);
@@ -272,6 +292,7 @@ public class MainActivity extends AppCompatActivity {
                     power.setText(splitAndReturnValue(message));
                 } else if (message.contains("auto start = ")) {
                     if (isAdmin) {
+                        ignoreSwitch[0] = true;
                         autoStartGen.setChecked(splitAndReturnValue(message).equals("1"));
                     }
                 }
