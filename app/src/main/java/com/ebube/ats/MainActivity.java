@@ -4,22 +4,19 @@ import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import com.google.android.material.switchmaterial.SwitchMaterial;
-import com.poovam.pinedittextfield.CirclePinField;
+import com.poovam.pinedittextfield.LinePinField;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
     private SwitchMaterial autoStartGen;
     private SwitchMaterial toggleGen;
     private boolean isAdmin;
-    private boolean isConnected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,32 +77,23 @@ public class MainActivity extends AppCompatActivity {
         lockAutoStart.setOnClickListener((e) -> getAdminCredentials());
 
         autoStartGen.setOnCheckedChangeListener((button, isChecked) -> {
-            if (isAdmin) {
-                if (connectedThread != null) {
-                    connectedThread.write(isChecked ? "1" : "0");
-                }
-            } else {
-                getAdminCredentials();
-                autoStartGen.setChecked(true);
+            if (isAdmin && connectedThread != null) {
+                connectedThread.write(isChecked ? "1" : "0");
             }
+
         });
 
         toggleGen.setOnCheckedChangeListener((button, isChecked) -> {
-            if (isAdmin) {
-                if (connectedThread != null) {
-                    connectedThread.write(isChecked ? "2" : "3");
-                    genStatus.setText(isChecked ? R.string.turn_off_gen : R.string.turn_on_gen);
-                }
-            } else {
-                getAdminCredentials();
-                toggleGen.setChecked(!isChecked);
+            if (isAdmin && connectedThread != null) {
+                connectedThread.write(isChecked ? "2" : "3");
+                genStatus.setText(isChecked ? R.string.turn_off_gen : R.string.turn_on_gen);
             }
         });
 
         createConnectThread = new CreateConnectThread(this);
 
         connectionTimer = new Timer();
-        connectionTimer.schedule(createConnectThread, 1000L, 30000L);
+        connectionTimer.schedule(createConnectThread, 5000L, 10000L);
     }
 
 
@@ -114,13 +101,13 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         LayoutInflater li = LayoutInflater.from(this);
         View view = li.inflate(R.layout.modal_activity, null);
-        CirclePinField circlePinField = view.findViewById(R.id.circleField);
+        LinePinField linePinField = view.findViewById(R.id.lineField);
         dialogBuilder.setView(view);
 
 
         dialogBuilder.setCancelable(false);
         AlertDialog dialog = dialogBuilder.create();
-        circlePinField.setOnTextCompleteListener((text) -> {
+        linePinField.setOnTextCompleteListener((text) -> {
             if (ADMIN_KEY.equals(text)) {
                 isAdmin = true;
                 lockGen.setVisibility(View.INVISIBLE);
@@ -128,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
                 toggleGen.setEnabled(true);
                 autoStartGen.setEnabled(true);
             } else {
+                isAdmin = false;
                 toggleGen.setEnabled(false);
                 autoStartGen.setEnabled(false);
                 lockGen.setVisibility(View.VISIBLE);
@@ -137,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
         dialog.show();
-        circlePinField.requestFocus();
+        linePinField.requestFocus();
     }
 
     /* ============================ Thread to Create Bluetooth Connection =================================== */
@@ -149,7 +137,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void run() {
-            if (isConnected) {
+            if (mmSocket != null && mmSocket.isConnected() && connectedThread != null) {
+                connectedThread.ping();
                 return;
             }
             runOnUiThread(() -> bluetoothStatus.setText(R.string.connecting));
@@ -166,16 +155,13 @@ public class MainActivity extends AppCompatActivity {
                 BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
                 bluetoothAdapter.cancelDiscovery();
                 try {
-
                     UUID uuid = bluetoothDevice.getUuids()[0].getUuid();
                     mmSocket = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(uuid);
                     mmSocket.connect();
                     Log.e("Status", "Device connected");
-                    isConnected = true;
                     runOnUiThread(() -> bluetoothStatus.setText(R.string.connected));
                 } catch (IOException connectException) {
                     // Unable to connect; close the socket and return.
-                    isConnected = false;
                     runOnUiThread(() -> bluetoothStatus.setText(R.string.not_connected));
                     try {
                         mmSocket.close();
@@ -221,7 +207,6 @@ public class MainActivity extends AppCompatActivity {
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
                 Log.e(TAG, "Could not get input and output stream of the client socket", e);
-                isConnected = false;
             }
 
             mmInStream = tmpIn;
@@ -285,6 +270,10 @@ public class MainActivity extends AppCompatActivity {
                     voltage.setText(splitAndReturnValue(message));
                 } else if (message.contains("power = ")) {
                     power.setText(splitAndReturnValue(message));
+                } else if (message.contains("auto start = ")) {
+                    if (isAdmin) {
+                        autoStartGen.setChecked(splitAndReturnValue(message).equals("1"));
+                    }
                 }
             });
         }
@@ -306,6 +295,23 @@ public class MainActivity extends AppCompatActivity {
                 mmOutStream.write(bytes);
             } catch (IOException e) {
                 Log.e("Send Error", "Unable to send message", e);
+                cancel();
+            }
+        }
+
+        /**
+         * ping the device to ensure the connection
+         */
+        public void ping() {
+            write("p");
+        }
+
+        // Closes the client socket and causes the thread to finish.
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Could not close the client socket", e);
             }
         }
 
@@ -315,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // Terminate Bluetooth Connection and close app
-        if (connectionTimer != null) {
-            connectionTimer.cancel();
-            createConnectThread.cancel();
+        if (connectedThread != null) {
+            connectedThread.cancel();
+            bluetoothStatus.setText(R.string.not_connected);
         }
         Intent a = new Intent(Intent.ACTION_MAIN);
         a.addCategory(Intent.CATEGORY_HOME);

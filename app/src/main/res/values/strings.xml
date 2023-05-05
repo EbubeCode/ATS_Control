@@ -17,5 +17,5 @@
     <string name="connected">Connected</string>
     <string name="not_connected">Not connected</string>
     <string name="turn_on_gen">Turn on Gen</string>
-    <string name="turn_off_gen">Turn of Gen</string>
+    <string name="turn_off_gen">Turn off Gen</string>
 </resources>
