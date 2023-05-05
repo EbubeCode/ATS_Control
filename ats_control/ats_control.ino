@@ -64,16 +64,17 @@ const long interval = 200;  //Interval to read voltages
 
 
 //***************************input pin declearation********************
-#define waterLevel A2  // water level sensor
+#define waterLevel A2          // water level sensor
+const int batteryCharger = 2;  // battey charger to move from pv to load current
+const int tripSwitch = 3;      // trip switch to ensure no tamper when device in operation
+const int echoPin = 11;        // utrasonic echo pin
 const int grid_line_input = 12;
 const int gen_line_input = 13;
-const int echoPin = 11;  // utrasonic echo pin
-const int tripSwitch = 3; // trip switch to ensure no tamper when device in operation
 
 //***************************output pin declearation********************
 const int grid_line_output = 4;
-const int gen_line_output = 6;
 const int solar_line_output = 5;
+const int gen_line_output = 6;
 const int gen_on_switch = 7;
 const int gen_start_switch = 8;
 const int buzzer = 9;
@@ -97,6 +98,7 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(tripSwitch, INPUT);
 
+  pinMode(batteryCharger, OUTPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(grid_line_output, OUTPUT);
   pinMode(gen_line_output, OUTPUT);
@@ -109,7 +111,9 @@ void setup() {
   pinMode(A0, INPUT);
   pinMode(A1, INPUT);
   pinMode(waterLevel, INPUT);
+
   // PLEASE NOTE ALL RELAY USED IN THIS PROJECT ARE ACTIVE LOW
+  digitalWrite(batteryCharger, HIGH);
   digitalWrite(grid_line_output, LOW);
   digitalWrite(gen_line_output, LOW);
   digitalWrite(solar_line_output, LOW);
@@ -195,9 +199,10 @@ void loop() {
 
 
   //******************************* Check power sources ********************************
-
-  if (gridline_current_state == HIGH && state != 0) {  // There's a change in state, such as from gen to grid
-    turnOnBuzzer();
+  if (gridline_current_state == HIGH) {
+    if (state != 0) {  // There's a change in state, such as from gen to grid
+      turnOnBuzzer();
+    }
     digitalWrite(gen_line_output, LOW);
     digitalWrite(solar_line_output, LOW);
     digitalWrite(grid_line_output, HIGH);
@@ -209,8 +214,10 @@ void loop() {
     }
     state = 0;
 
-  } else if (genline_current_state == HIGH && state != 1) {  // There's a change in state, such as from pv to gen
-    turnOnBuzzer();
+  } else if (genline_current_state == HIGH) {
+    if (state != 1) {  // There's a change in state, such as from pv to gen
+      turnOnBuzzer();
+    }
     digitalWrite(solar_line_output, LOW);
     digitalWrite(grid_line_output, LOW);
     digitalWrite(gen_on_switch, HIGH);
@@ -219,8 +226,10 @@ void loop() {
     lcd.setCursor(0, 0);  // set to line 1, char 0
     lcd.print("GEN is ON           ");
     state = 1;
-  } else if (state != 2) {  // There's a change in state, such as from grid to pv
-    turnOnBuzzer();
+  } else {
+    if (state != 2) {  // There's a change in state, such as from grid to pv
+      turnOnBuzzer();
+    }
     digitalWrite(gen_line_output, LOW);
     digitalWrite(grid_line_output, LOW);
     digitalWrite(solar_line_output, HIGH);
@@ -246,6 +255,9 @@ void loop() {
       toggleGen(0);
     }
   }
+
+  //******************************************* Check gen State ********************************************************
+  checkGenState();
 }
 void turnOnBuzzer() {
   digitalWrite(buzzer, HIGH);

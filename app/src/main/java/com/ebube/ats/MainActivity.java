@@ -150,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
                 connectedThread.ping();
                 return;
             }
+            runOnUiThread(MainActivity.this::returnFieldsToDefault);
             runOnUiThread(() -> bluetoothStatus.setText(R.string.connecting));
             if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.BLUETOOTH}, 3);
@@ -187,17 +188,6 @@ public class MainActivity extends AppCompatActivity {
                 connectedThread.start();
             }
         }
-
-        // Closes the client socket and causes the thread to finish.
-        public boolean cancel() {
-            try {
-                mmSocket.close();
-                return true;
-            } catch (IOException e) {
-                Log.e(TAG, "Could not close the client socket", e);
-            }
-            return false;
-        }
     }
 
     /* =============================== Thread for Data Transfer =========================================== */
@@ -223,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
+            byte[] buffer = new byte[100];  // buffer store for the stream
             int bytes = 0; // bytes returned from read()
             // Keep listening to the InputStream until an exception occurs
             while (true) {
@@ -233,12 +223,13 @@ public class MainActivity extends AppCompatActivity {
                     Then send the whole String message to GUI Handler.
                      */
                     buffer[bytes] = (byte) mmInStream.read();
-                    String readMessage;
+                    String readMessage = new String(buffer, 0, bytes);
+                    Log.i(TAG, readMessage);
                     if (buffer[bytes] == '\n') {
-                        readMessage = new String(buffer, 0, bytes);
                         updateUI(readMessage);
                         Log.e("Arduino Message", readMessage);
                         bytes = 0;
+                        buffer = new byte[100];
                     } else {
                         bytes++;
                     }
@@ -251,36 +242,31 @@ public class MainActivity extends AppCompatActivity {
 
         public void updateUI(String message) {
             runOnUiThread(() -> {
-                switch (message) {
-                    case "grid is on":
-                        tripBulbs();
-                        gridBulb.setImageResource(R.drawable.bulb_alive);
-                        if (toggleGen.isEnabled()) {
-                            ignoreSwitch[1] = true;
-                            toggleGen.setChecked(false);
-                        }
-                        genStatus.setText(R.string.turn_on_gen);
-                        return;
-                    case "pv is on":
-                        tripBulbs();
-                        solarBulb.setImageResource(R.drawable.bulb_alive);
-                        if (toggleGen.isEnabled()) {
-                            ignoreSwitch[1] = true;
-                            toggleGen.setChecked(false);
-                        }
-                        genStatus.setText(R.string.turn_on_gen);
-                        return;
-                    case "gen is on":
-                        tripBulbs();
-                        genBulb.setImageResource(R.drawable.bulb_alive);
-                        if (toggleGen.isEnabled()) {
-                            ignoreSwitch[1] = true;
-                            toggleGen.setChecked(true);
-                        }
-                        genStatus.setText(R.string.turn_off_gen);
-                        return;
-                }
-                if (message.contains("water lever = ")) {
+                if (message.contains("grid is on")) {
+                    tripBulbs();
+                    gridBulb.setImageResource(R.drawable.bulb_alive);
+                    if (toggleGen.isEnabled()) {
+                        ignoreSwitch[1] = true;
+                        toggleGen.setChecked(false);
+                    }
+                    genStatus.setText(R.string.turn_on_gen);
+                } else if (message.contains("pv is on")) {
+                    tripBulbs();
+                    solarBulb.setImageResource(R.drawable.bulb_alive);
+                    if (toggleGen.isEnabled()) {
+                        ignoreSwitch[1] = true;
+                        toggleGen.setChecked(false);
+                    }
+                    genStatus.setText(R.string.turn_on_gen);
+                } else if (message.contains("gen is on")) {
+                    tripBulbs();
+                    genBulb.setImageResource(R.drawable.bulb_alive);
+                    if (toggleGen.isEnabled()) {
+                        ignoreSwitch[1] = true;
+                        toggleGen.setChecked(true);
+                    }
+                    genStatus.setText(R.string.turn_off_gen);
+                } else if (message.contains("water level = ")) {
                     waterLevel.setText(splitAndReturnValue(message));
                 } else if (message.contains("oil level = ")) {
                     oilLevel.setText(splitAndReturnValue(message));
@@ -330,6 +316,7 @@ public class MainActivity extends AppCompatActivity {
         // Closes the client socket and causes the thread to finish.
         public void cancel() {
             try {
+                runOnUiThread(MainActivity.this::returnFieldsToDefault);
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "Could not close the client socket", e);
@@ -344,11 +331,24 @@ public class MainActivity extends AppCompatActivity {
         // Terminate Bluetooth Connection and close app
         if (connectedThread != null) {
             connectedThread.cancel();
-            bluetoothStatus.setText(R.string.not_connected);
         }
         Intent a = new Intent(Intent.ACTION_MAIN);
         a.addCategory(Intent.CATEGORY_HOME);
         a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(a);
+    }
+
+    public void returnFieldsToDefault() {
+        gridBulb.setImageResource(R.drawable.bulb_dead);
+        genBulb.setImageResource(R.drawable.bulb_dead);
+        solarBulb.setImageResource(R.drawable.bulb_dead);
+        current.setText(R.string.nil);
+        voltage.setText(R.string.nil);
+        power.setText(R.string.nil);
+        oilLevel.setText(R.string.nil);
+        waterLevel.setText(R.string.nil);
+        toggleGen.setChecked(false);
+        autoStartGen.setChecked(true);
+        bluetoothStatus.setText(R.string.not_connected);
     }
 }

@@ -192,7 +192,7 @@
 
 
             <TextView
-                    android:text="0A"
+                    android:text="@string/nil"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/current"
@@ -248,7 +248,7 @@
 
 
             <TextView
-                    android:text="0V"
+                    android:text="@string/nil"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/voltage"
@@ -304,7 +304,7 @@
 
 
             <TextView
-                    android:text="0W"
+                    android:text="@string/nil"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/power"
@@ -360,7 +360,7 @@
 
 
             <TextView
-                    android:text="Low"
+                    android:text="@string/nil"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/waterLevel"
@@ -416,7 +416,7 @@
 
 
             <TextView
-                    android:text="Low"
+                    android:text="@string/nil"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/oilLevel"
