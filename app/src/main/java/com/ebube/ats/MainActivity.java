@@ -229,7 +229,6 @@ public class MainActivity extends AppCompatActivity {
                         updateUI(readMessage);
                         Log.e("Arduino Message", readMessage);
                         bytes = 0;
-                        buffer = new byte[100];
                     } else {
                         bytes++;
                     }
