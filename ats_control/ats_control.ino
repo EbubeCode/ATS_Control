@@ -94,6 +94,7 @@ void setup() {
   lcd.print("Initializing...");
   lcd.blink();
   delay(250);
+  lcd.clear();
 }
 
 void turnOnBuzzer();
@@ -166,7 +167,7 @@ void loop() {
     digitalWrite(gen_line_output, HIGH);
     digitalWrite(gen_on_switch, HIGH);
     lcd.setCursor(0, 0);  // set to line 1, char 0
-    lcd.print("GeN is ON          ");
+    lcd.print("Gen is ON          ");
     Serial.println("gen is on");
     state = 1;
   } else {
@@ -192,6 +193,7 @@ void loop() {
     bluetoothCommand = Serial.read();  // Read the message
     if (bluetoothCommand == '0') {     // user wants to turn off auto start gen
       autoStartGen = false;
+    Serial.println("auto start = 1");
     } else if (bluetoothCommand == '1') {  // user wants to turn on auto start gen
       autoStartGen = true;
     } else if (bluetoothCommand == '2') {  // user wants to turn on gen
@@ -203,11 +205,9 @@ void loop() {
   if (autoStartGen) {
     lcd.setCursor(0, 3);
     lcd.print("Auto start gen: ON");
-    Serial.println("auto start = 1");
   } else {
     lcd.setCursor(0, 3);
     lcd.print("Auto start gen: OFF");
-    Serial.println("auto start = 0");
   }
 
   //******************************************* Check gen State ********************************************************
