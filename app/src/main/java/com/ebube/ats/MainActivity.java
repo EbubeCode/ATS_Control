@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(enableBtIntent, 2);
                     return;
                 }
-                String DEVICE_ADDRESS = "00:22:06:01:25:5B";
+                String DEVICE_ADDRESS = "00:22:06:01:23:54";
                 BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
                 bluetoothAdapter.cancelDiscovery();
                 try {

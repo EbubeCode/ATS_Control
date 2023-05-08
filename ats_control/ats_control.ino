@@ -164,9 +164,11 @@ void loop() {
     digitalWrite(solar_line_output, LOW);
     digitalWrite(grid_line_output, LOW);
     digitalWrite(gen_line_output, HIGH);
+    digitalWrite(gen_on_switch, HIGH);
     lcd.setCursor(0, 0);  // set to line 1, char 0
     lcd.print("GeN is ON          ");
     Serial.println("gen is on");
+    state = 1;
   } else {
     if (state != 2) {  // There's a change in state, such as from grid to pv
       turnOnBuzzer();
@@ -179,6 +181,8 @@ void loop() {
     lcd.print("PV is ON            ");
     if (autoStartGen && state == 0) {  // check auto start gen and ensure that the previous state was grid
       toggleGen(1, false);
+    } else {
+    toggleGen(0, true);
     }
     state = 2;
   }
@@ -223,7 +227,11 @@ void toggleGen(int toggle, bool ignoreGenState) {
     return;
   }
 
-  if (digitalRead(grid_line_input) == HIGH || digitalRead(gen_line_input) == HIGH) {
+  if (digitalRead(grid_line_input) == HIGH) {
+    toggleGen(0, true);
+    return;
+  }
+  if(digitalRead(gen_line_input) == HIGH) {
     return;   // ensure that the gen isn't on before trying to turn on gen
   }
 
