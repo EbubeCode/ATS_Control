@@ -25,8 +25,8 @@ const long interval = 200;  //Interval to read voltages
 
 
 //***************************input pin declearation********************
-#define waterLevel A2          // water level sensor
-const int echoPin = 11;        // utrasonic echo pin
+#define waterLevel A2    // water level sensor
+const int echoPin = 11;  // utrasonic echo pin
 const int grid_line_input = 12;
 const int gen_line_input = 3;
 
@@ -103,115 +103,115 @@ bool checkGenState();
 
 void loop() {
 
-
-  //**********************checking for the state of each input******************************
-  int gridline_current_state = digitalRead(grid_line_input);
-  Serial.print("Grid current state");
-  Serial.println(gridline_current_state);
-  int genline_current_state = digitalRead(gen_line_input);
-  Serial.print("Gen current state");
-  Serial.println(genline_current_state);
-
-  //***************************Measure Voltage*******************************************
-  load_volt_sensor = analogRead(A0);                                     //reading the sensor values in 10bit resolution 0-1023
-  load_vd = (load_volt_sensor * 5.00) / 1024.00;                         //Convert 10bit input to an actual voltage
-  load_rect_volt = (load_vd - 0.038) * CalVal;                           //calculate voltage divider and calibration value to get output dc voltage
-  load_trans_sec_volt = (load_rect_volt / rms_voltage_factor);           //reconvert DC voltage to AC voltage from transformer secondary turn
-  load_trans_pri_volt = (load_trans_sec_volt * transformer_turn_ratio);  //calculating the actual AC MAIN voltage for this source
-
-  //************************* Measure Power ******************************************
-  int current = robojax.getCurrentAverage(300);
-  int Power = (load_trans_pri_volt * current);
-
-  // ***********************Output voltage and current lcd info************************
-  lcd.setCursor(0, 1);
-  lcd.print("Volt: ");
-  lcd.print(load_trans_pri_volt);
-  lcd.print("V  ");                                                  // unit for voltage to be measured
-  Serial.println("voltage = " + String(load_trans_pri_volt) + "V");  // send voltage to bluetooth app
-  lcd.print("Crnt: ");
-  lcd.print(current);
-  lcd.print("A");                                        //unit for the current to be measured
-  Serial.println("current = " + String(current) + "A");  // send current to bluetooth app
-  lcd.setCursor(0, 2);
-  lcd.print("Power: ");
-  lcd.print(Power);
-  lcd.print("W");                                    //unit for the current to be measured
-  Serial.println("power = " + String(Power) + "W");  // send power to bluetooth app
-  lcd.noBlink();
-
-
-
-  //******************************* Check power sources ********************************
-  if (gridline_current_state == HIGH) {
-    if (state != 0) {  // There's a change in state, such as from gen to grid
-      turnOnBuzzer();
-    }
-    digitalWrite(gen_line_output, LOW);
-    digitalWrite(solar_line_output, LOW);
-    digitalWrite(grid_line_output, HIGH);
-    lcd.setCursor(0, 0);  // set to line 1, char 0
-    lcd.print("GRID is ON          ");
-    Serial.println("grid is on");
-    if (state == 1) {
-      toggleGen(0, true);  // the gen was on and need to be turned off
-    }
-    state = 0;
-
-  } else if (genline_current_state == HIGH) {
-    if (state != 1) {  // There's a change in state, such as from pv to gen
-      turnOnBuzzer();
-    }
-    digitalWrite(solar_line_output, LOW);
-    digitalWrite(grid_line_output, LOW);
-    digitalWrite(gen_line_output, HIGH);
-    digitalWrite(gen_on_switch, HIGH);
-    lcd.setCursor(0, 0);  // set to line 1, char 0
-    lcd.print("Gen is ON          ");
-    Serial.println("gen is on");
-    state = 1;
-  } else {
-    if (state != 2) {  // There's a change in state, such as from grid to pv
-      turnOnBuzzer();
-    }
-    digitalWrite(gen_line_output, LOW);
-    digitalWrite(grid_line_output, LOW);
-    digitalWrite(solar_line_output, HIGH);
-    Serial.println("pv is on");
-    lcd.setCursor(0, 0);  // set to line 1, char 0
-    lcd.print("PV is ON            ");
-    if (autoStartGen && state == 0) {  // check auto start gen and ensure that the previous state was grid
-      toggleGen(1, false);
-    } else {
-    toggleGen(0, true);
-    }
-    state = 2;
-  }
-
   //********************************************* Check for bluetooth communication from the app ***********************************
   if (Serial.available() > 0) {        // Check if there is data coming
     bluetoothCommand = Serial.read();  // Read the message
     if (bluetoothCommand == '0') {     // user wants to turn off auto start gen
       autoStartGen = false;
-    Serial.println("auto start = 1");
+      Serial.println("auto start = 1");
     } else if (bluetoothCommand == '1') {  // user wants to turn on auto start gen
       autoStartGen = true;
     } else if (bluetoothCommand == '2') {  // user wants to turn on gen
-      toggleGen(1, true); // ignoring gen state because the operator have seen the water level and oil levels on the app
+      toggleGen(1, true);                  // ignoring gen state because the operator have seen the water level and oil levels on the app
     } else if (bluetoothCommand == '3') {  // user wants to turn off gen
       toggleGen(0, true);
     }
-  }
-  if (autoStartGen) {
-    lcd.setCursor(0, 3);
-    lcd.print("Auto start gen: ON");
   } else {
-    lcd.setCursor(0, 3);
-    lcd.print("Auto start gen: OFF");
-  }
 
-  //******************************************* Check gen State ********************************************************
-  checkGenState();
+    //**********************checking for the state of each input******************************
+    int gridline_current_state = digitalRead(grid_line_input);
+    Serial.print("Grid current state");
+    Serial.println(gridline_current_state);
+    int genline_current_state = digitalRead(gen_line_input);
+    Serial.print("Gen current state");
+    Serial.println(genline_current_state);
+
+    //***************************Measure Voltage*******************************************
+    load_volt_sensor = analogRead(A0);                                     //reading the sensor values in 10bit resolution 0-1023
+    load_vd = (load_volt_sensor * 5.00) / 1024.00;                         //Convert 10bit input to an actual voltage
+    load_rect_volt = (load_vd - 0.038) * CalVal;                           //calculate voltage divider and calibration value to get output dc voltage
+    load_trans_sec_volt = (load_rect_volt / rms_voltage_factor);           //reconvert DC voltage to AC voltage from transformer secondary turn
+    load_trans_pri_volt = (load_trans_sec_volt * transformer_turn_ratio);  //calculating the actual AC MAIN voltage for this source
+
+    //************************* Measure Power ******************************************
+    int current = robojax.getCurrentAverage(300);
+    int Power = (load_trans_pri_volt * current);
+    // ***********************Output voltage and current lcd info************************
+    lcd.setCursor(0, 1);
+    lcd.print("V: ");
+    lcd.print(load_trans_pri_volt);
+    lcd.print("V  ");                                                  // unit for voltage to be measured
+    Serial.println("voltage = " + String(load_trans_pri_volt) + "V");  // send voltage to bluetooth app
+    lcd.print("I: ");
+    lcd.print(current);
+    lcd.print("A");                                        //unit for the current to be measured
+    Serial.println("current = " + String(current) + "A ");  // send current to bluetooth app
+    lcd.setCursor(0, 2);
+    lcd.print("Power: ");
+    lcd.print(Power);
+    lcd.print("W");                                    //unit for the current to be measured
+    Serial.println("power = " + String(Power) + "W");  // send power to bluetooth app
+    lcd.noBlink();
+
+
+
+    //******************************* Check power sources ********************************
+    if (gridline_current_state == HIGH) {
+      if (state != 0) {  // There's a change in state, such as from gen to grid
+        turnOnBuzzer();
+      }
+      digitalWrite(gen_line_output, LOW);
+      digitalWrite(solar_line_output, LOW);
+      digitalWrite(grid_line_output, HIGH);
+      lcd.setCursor(0, 0);  // set to line 1, char 0
+      lcd.print("GRID is ON          ");
+      Serial.println("grid is on");
+      if (state == 1) {
+        toggleGen(0, true);  // the gen was on and need to be turned off
+      }
+      state = 0;
+
+    } else if (genline_current_state == HIGH) {
+      if (state != 1) {  // There's a change in state, such as from pv to gen
+        turnOnBuzzer();
+      }
+      digitalWrite(solar_line_output, LOW);
+      digitalWrite(grid_line_output, LOW);
+      digitalWrite(gen_line_output, HIGH);
+      digitalWrite(gen_on_switch, HIGH);
+      lcd.setCursor(0, 0);  // set to line 1, char 0
+      lcd.print("Gen is ON          ");
+      Serial.println("gen is on");
+      state = 1;
+    } else {
+      if (state != 2) {  // There's a change in state, such as from grid to pv
+        turnOnBuzzer();
+      }
+      digitalWrite(gen_line_output, LOW);
+      digitalWrite(grid_line_output, LOW);
+      digitalWrite(solar_line_output, HIGH);
+      Serial.println("pv is on");
+      lcd.setCursor(0, 0);  // set to line 1, char 0
+      lcd.print("PV is ON            ");
+      if (autoStartGen && state == 0) {  // check auto start gen and ensure that the previous state was grid
+        toggleGen(1, false);
+      } else {
+        toggleGen(0, true);
+      }
+      state = 2;
+    }
+
+    if (autoStartGen) {
+      lcd.setCursor(0, 3);
+      lcd.print("Auto start gen: ON ");
+    } else {
+      lcd.setCursor(0, 3);
+      lcd.print("Auto start gen: OFF");
+    }
+
+    //******************************************* Check gen State ********************************************************
+    checkGenState();
+  }
 }
 void turnOnBuzzer() {
   digitalWrite(buzzer, HIGH);
@@ -221,9 +221,10 @@ void turnOnBuzzer() {
 
 void toggleGen(int toggle, bool ignoreGenState) {
   if (toggle == 0) {
-  Serial.println("Turning off gen");
+    Serial.println("Turning off gen");
     digitalWrite(gen_start_switch, LOW);
     digitalWrite(gen_on_switch, LOW);
+    Serial.println("switchGen = 1");
     return;
   }
 
@@ -231,22 +232,24 @@ void toggleGen(int toggle, bool ignoreGenState) {
     toggleGen(0, true);
     return;
   }
-  if(digitalRead(gen_line_input) == HIGH) {
-    return;   // ensure that the gen isn't on before trying to turn on gen
+  if (digitalRead(gen_line_input) == HIGH) {
+    return;  // ensure that the gen isn't on before trying to turn on gen
   }
 
   if (ignoreGenState || checkGenState()) {
     digitalWrite(gen_on_switch, HIGH);
     digitalWrite(gen_start_switch, HIGH);
-    delay(2000);                                       // delay 2 seconds to do the kick start
+    delay(2000);  // delay 2 seconds to do the kick start
     digitalWrite(gen_start_switch, LOW);
-    delay(10000);                                      // delay for 10 seconds and allow to settle (started or not)
+    delay(10000);  // delay for 10 seconds and allow to settle (started or not)
     if (digitalRead(gen_line_input) == LOW) {
       if (toggle <= 2) {
         toggleGen(toggle + 1, ignoreGenState);  // retry turning on gen
-      } else {                  // after three trials and the gen refused to start, we can assume there's a problem
-        toggleGen(0, true);           // turn off the relays
+      } else {                                  // after three trials and the gen refused to start, we can assume there's a problem
+        toggleGen(0, true);                     // turn off the relays
       }
+    } else {
+      Serial.println("switchGen = 0");
     }
   }
 }

@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(enableBtIntent, 2);
                     return;
                 }
-                String DEVICE_ADDRESS = "00:22:06:01:23:54";
+                String DEVICE_ADDRESS = "00:22:06:01:25:5B";
                 BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(DEVICE_ADDRESS);
                 bluetoothAdapter.cancelDiscovery();
                 try {
@@ -244,26 +244,14 @@ public class MainActivity extends AppCompatActivity {
                 if (message.contains("grid is on")) {
                     tripBulbs();
                     gridBulb.setImageResource(R.drawable.bulb_alive);
-                    if (toggleGen.isEnabled()) {
-                        ignoreSwitch[1] = true;
-                        toggleGen.setChecked(false);
-                    }
                     genStatus.setText(R.string.turn_on_gen);
                 } else if (message.contains("pv is on")) {
                     tripBulbs();
                     solarBulb.setImageResource(R.drawable.bulb_alive);
-                    if (toggleGen.isEnabled()) {
-                        ignoreSwitch[1] = true;
-                        toggleGen.setChecked(false);
-                    }
                     genStatus.setText(R.string.turn_on_gen);
                 } else if (message.contains("gen is on")) {
                     tripBulbs();
                     genBulb.setImageResource(R.drawable.bulb_alive);
-                    if (toggleGen.isEnabled()) {
-                        ignoreSwitch[1] = true;
-                        toggleGen.setChecked(true);
-                    }
                     genStatus.setText(R.string.turn_off_gen);
                 } else if (message.contains("water level = ")) {
                     waterLevel.setText(splitAndReturnValue(message));
@@ -275,10 +263,11 @@ public class MainActivity extends AppCompatActivity {
                     voltage.setText(splitAndReturnValue(message));
                 } else if (message.contains("power = ")) {
                     power.setText(splitAndReturnValue(message));
-                } else if (message.contains("auto start = ")) {
-                    if (isAdmin) {
-                        ignoreSwitch[0] = true;
-                        autoStartGen.setChecked(splitAndReturnValue(message).equals("1"));
+                } else if (message.contains("switchGen = ")) {
+                    genStatus.setText(splitAndReturnValue(message).equals("0") ? R.string.turn_off_gen : R.string.turn_on_gen);
+                    if (toggleGen.isEnabled()) {
+                        ignoreSwitch[1] = true;
+                        toggleGen.setChecked(splitAndReturnValue(message).equals("0"));
                     }
                 }
             });
